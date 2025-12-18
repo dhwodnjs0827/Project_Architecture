@@ -3,6 +3,10 @@ using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
+/// <summary>
+/// Addressable API 사용 (Concrete Strategy)
+/// <para>ResourceManager에서 사용</para>
+/// </summary>
 public class AddressableHandler : IResourceHandler
 {
     public async UniTask<T> LoadAsync<T>(string path) where T : Object

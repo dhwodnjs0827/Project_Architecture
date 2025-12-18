@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
+/// <summary>
+/// Resources API 사용 (Concrete Strategy)
+/// <para>ResourceManager에서 사용</para>
+/// </summary>
 public class ResourcesHandler : IResourceHandler
 {
     public async UniTask<T> LoadAsync<T>(string path) where T : Object
