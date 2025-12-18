@@ -9,23 +9,21 @@ public class ResourcesHandler : IResourceHandler
 {
     public async UniTask<T> LoadAsync<T>(string path) where T : Object
     {
-        var resource = await Resources.LoadAsync<T>(path);
-        if (resource == null)
+        var request = Resources.LoadAsync<T>(path);
+        await request;
+
+        if (request.asset == null)
         {
             return null;
         }
-        return resource as T;
+
+        return request.asset as T;
     }
 
-    public async UniTask<T[]> LoadAllAsync<T>(string path) where T : Object
+    public UniTask<T[]> LoadAllAsync<T>(string path) where T : Object
     {
         var resources = Resources.LoadAll<T>(path);
-        if (resources == null)
-        {
-            return null;
-        }
-        await UniTask.CompletedTask;
-        return resources;
+        return UniTask.FromResult(resources);
     }
 
     public void Release(Object obj)
