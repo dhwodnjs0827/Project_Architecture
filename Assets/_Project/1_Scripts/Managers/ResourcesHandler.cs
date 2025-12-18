@@ -30,11 +30,12 @@ public class ResourcesHandler : IResourceHandler
 
     public void Release(Object obj)
     {
-        if (obj is GameObject)
+        if (obj is GameObject or Component)
         {
-            // GameObject는 unloadAsset 불가
+            // GameObject/Component는 unloadAsset 불가
             return;
         }
+        
         Resources.UnloadAsset(obj);
     }
 }
