@@ -4,7 +4,7 @@ public abstract class BaseScene
 {
     public abstract SceneType SceneType { get; }
 
-    public abstract UniTask InitializeAsync();
+    public virtual UniTask InitializeAsync() => UniTask.CompletedTask;
     
-    public abstract UniTask CleanupAsync();
+    public virtual UniTask CleanupAsync() => UniTask.CompletedTask;
 }

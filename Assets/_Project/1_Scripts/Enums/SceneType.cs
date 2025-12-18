@@ -1,12 +1,14 @@
 /// <summary>
 /// Scene 종류
-/// <para>각 Scene 타입 값: Build Index</para>>
 /// </summary>
+/// <remarks>
+/// SceneType은 구분 용도이며, 실제 씬 로드는 Scene 이름 기반으로 처리
+/// </remarks>
 public enum SceneType
 {
-    Title,
-    Lobby,
-    Game,
+    TitleScene,
+    LobbyScene,
+    GameScene,
     
-    Sample,
+    SampleScene,
 }
