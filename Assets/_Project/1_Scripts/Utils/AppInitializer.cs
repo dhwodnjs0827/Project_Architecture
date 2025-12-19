@@ -15,6 +15,14 @@ public static class AppInitializer
     private static void InitializeBeforeSceneLoad()
     {
         Application.targetFrameRate = 60;
+        
+        // Prefab에서 AudioManager 로드
+        var audioManagerPrefab = Resources.Load<AudioManager>("Audio/AudioManager");
+        if (audioManagerPrefab != null)
+        {
+            var audioManager = Object.Instantiate(audioManagerPrefab);
+            audioManager.name = "AudioManager";
+        }
     }
     
     /// <summary>
