@@ -10,11 +10,11 @@ public interface IPoolable
     /// Get() 호출 -> SetActive(ture) -> IPoolable.OnGet() 호출 -> 오브젝트 반환
     /// </remarks>
     public void OnGet();
-    
+
     /// <summary>
     /// pool에 반환할 때 호출
     /// </summary>
-    /// /// <remarks>
+    /// <remarks>
     /// Release() 호출 -> IPoolable.OnRelease() 호출 -> SetActive(false) -> pool에 반환
     /// </remarks>
     public void OnRelease();
