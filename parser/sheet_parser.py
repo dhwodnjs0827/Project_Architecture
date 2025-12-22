@@ -21,9 +21,15 @@ def get_all_worksheets(client, spreadsheet_id):
     worksheets = spreadsheet.worksheets()
 
     # !, @, # 접두사가 붙은 시트 제외
-    valid_sheets = [ws for ws in worksheets if not ws.title.startswith('!', '@', '#')]
+    INVALID_PREFIXES = ('!', '@', '#')
 
-    return valid_sheets
+
+valid_sheets = [
+    ws for ws in worksheets
+    if not ws.title.startswith(INVALID_PREFIXES)
+]
+
+return valid_sheets
 
 
 def parse_sheet(worksheet):
