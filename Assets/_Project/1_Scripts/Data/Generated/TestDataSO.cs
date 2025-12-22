@@ -1,29 +1,29 @@
 using System.Collections.Generic;
-  using UnityEngine;
+using UnityEngine;
 
-  [CreateAssetMenu(fileName = "TestDataSO", menuName = "Data/TestDataSO")]
-  public class TestDataSO : ScriptableObject
-  {
-      public List<TestData> items = new();
+[CreateAssetMenu(fileName = "TestDataSO", menuName = "Data/TestDataSO")]
+public class TestDataSO : ScriptableObject
+{
+    public List<TestData> items = new();
       
-      private Dictionary<int, TestData> dataDict;
+    private Dictionary<int, TestData> dataDict;
       
-      public void Initialize()
-      {
-          dataDict = new Dictionary<int, TestData>();
-          foreach (var item in items)
-          {
-              dataDict[item.id] = item;
-          }
-      }
+    public void Initialize()
+    {
+        dataDict = new Dictionary<int, TestData>();
+        foreach (var item in items)
+        {
+            dataDict[item.id] = item;
+        }
+    }
       
-      public TestData Get(int id)
-      {
-          if (dataDict == null || dataDict.Count == 0)
-          {
-              Initialize();
-          }
-          return dataDict.GetValueOrDefault(id);
-      }
-  }
+    public TestData Get(int id)
+    {
+        if (dataDict == null || dataDict.Count == 0)
+        {
+            Initialize();
+        }
+        return dataDict.GetValueOrDefault(id);
+    }
+}
   
