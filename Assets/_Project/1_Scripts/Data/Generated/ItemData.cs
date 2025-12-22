@@ -4,9 +4,9 @@ using System;
   [Serializable]
   public class ItemData
   {
-      public string id;
+      public int id;
     public string name;
-    public string price;
+    public int price;
     public string description;
   }
   
