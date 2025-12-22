@@ -76,7 +76,18 @@ def parse_sheet(worksheet):
 
 def parse_value(value, value_type):
     """값을 타입에 맞게 변환"""
-    if value == '' or value == 'None':
+    if value == '':
+        return None
+
+    # enum 타입은 None을 문자열로 유지
+    if value == 'None':
+        if value_type not in (
+                'int', 'float', 'bool',
+                'string',
+                'List<int>', 'List<float>', 'List<string>',
+                'int[]', 'float[]', 'string[]'
+        ):
+            return 'None'
         return None
 
     if value_type == 'int':
