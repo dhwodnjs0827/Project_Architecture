@@ -36,10 +36,15 @@ def parse_sheet(worksheet):
 
         if len(rows) < 4:
             print(f'⚠ Skip {worksheet.title}: not enough rows')
-            return None, None, None
+            return None, None, None, None
 
+        # 주석
+        type_desc = row[0]
+        # 타입
         type_row = rows[1]
+        # 키 값
         key_row = rows[2]
+        # 데이터 값
         data_rows = rows[3:]
 
         parsed = []
@@ -62,11 +67,11 @@ def parse_sheet(worksheet):
             parsed.append(item)
 
         print(f'✓ Parsed: {worksheet.title} ({len(parsed)} rows)')
-        return parsed, type_row, key_row
+        return parsed, type_row, key_row, type_desc
 
     except Exception as e:
         print(f'✗ Error parsing {worksheet.title}: {e}')
-        return None, None, None
+        return None, None, None, None
 
 
 def parse_value(value, value_type):
@@ -112,7 +117,7 @@ def save_to_json(data, output_path):
     print(f'  → Saved: {output_path}')
 
 
-def generate_csharp_classes(sheet_name, type_row, key_row, output_dir):
+def generate_csharp_classes(sheet_name, type_row, key_row, type_desc, output_dir):
     """C# 데이터 클래스 및 SO 클래스 생성"""
 
     # 타입 매핑
@@ -137,7 +142,8 @@ def generate_csharp_classes(sheet_name, type_row, key_row, output_dir):
             continue
         value_type = type_row[i] if i < len(type_row) else 'string'
         cs_type = type_mapping.get(value_type, 'string')
-        fields.append(f'    public {cs_type} {key};')
+        value_desc = type_desc[i]
+        fields.append(f'    public {cs_type} {key} // {value_desc};')
 
     fields_str = '\n'.join(fields)
 
@@ -145,10 +151,13 @@ def generate_csharp_classes(sheet_name, type_row, key_row, output_dir):
     data_class = f'''using System;
 using System.Collections.Generic;
 
-[Serializable]
-public class {sheet_name}
+namespace Generated
 {{
+    [Serializable]
+    public class {sheet_name}
+    {{
     {fields_str}
+    }}
 }}
   '''
 
@@ -156,29 +165,12 @@ public class {sheet_name}
     so_class = f'''using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "{sheet_name}SO", menuName = "Data/{sheet_name}SO")]
-public class {sheet_name}SO : ScriptableObject
+namespace Generated
 {{
-    public List<{sheet_name}> items = new();
-      
-    private Dictionary<int, {sheet_name}> dataDict;
-      
-    public void Initialize()
+    [CreateAssetMenu(fileName = "{sheet_name}SO", menuName = "Data/{sheet_name}SO")]
+    public class {sheet_name}SO : ScriptableObject
     {{
-        dataDict = new Dictionary<int, {sheet_name}>();
-        foreach (var item in items)
-        {{
-            dataDict[item.id] = item;
-        }}
-    }}
-      
-    public {sheet_name} Get(int id)
-    {{
-        if (dataDict == null || dataDict.Count == 0)
-        {{
-            Initialize();
-        }}
-        return dataDict.GetValueOrDefault(id);
+    {fields_str}
     }}
 }}
   '''
@@ -242,7 +234,7 @@ def main():
 
         if data is not None:
             save_to_json(data, json_path)
-            generate_csharp_classes(sheet_name, type_row, key_row, cs_output_dir)
+            generate_csharp_classes(sheet_name, type_row, key_row, type_desc, cs_output_dir)
             success_count += 1
 
     print()
