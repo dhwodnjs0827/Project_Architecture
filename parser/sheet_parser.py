@@ -34,12 +34,52 @@ def get_all_worksheets(client, spreadsheet_id):
 def parse_sheet(worksheet):
     """시트 데이터를 딕셔너리 리스트로 변환"""
     try:
-        records = worksheet.get_all_records()
-        print(f'✓ Parsed: {worksheet.title} ({len(records)} rows)')
-        return records
+        parsed = []
+
+    for row in data_rows:
+    if not row or row[0].startswith('#'):
+        continue
+
+    item = {}
+    for i in range(len(key_row)):
+        key = key_row[i]
+        value_type = type_row[i]
+        value = row[i] if i < len(row) else ''
+
+        item[key] = parse_value(value, value_type)
+
+    parsed.append(item)
     except Exception as e:
         print(f'✗ Error parsing {worksheet.title}: {e}')
         return None
+
+
+def parse_value(value, value_type):
+    if value == '' or value == 'None':
+        return None
+
+    if value_type == 'int':
+        return int(value)
+
+    if value_type == 'float':
+        return float(value)
+
+    if value_type == 'string':
+        return value
+
+    if value_type == 'EventType':
+        return value  # enum은 Unity에서 변환
+
+    if value_type in ('List<int>', 'int[]'):
+        return [int(v) for v in value.split(',')]
+
+    if value_type in ('List<float>', 'float[]'):
+        return [float(v) for v in value.split(',')]
+
+    if value_type in ('List<string>', 'string[]'):
+        return [v for v in value.split(',')]
+
+    return value
 
 
 def save_to_json(data, output_path):
