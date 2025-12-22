@@ -16,7 +16,7 @@ def get_sheet_client(credentials_path):
 
 
 def get_all_worksheets(client, spreadsheet_id):
-    """모든 워크시트 목록 가져오기 (! 접두사 제외)"""
+    """모든 워크시트 목록 가져오기 (!, @, # 접두사 제외)"""
     spreadsheet = client.open_by_key(spreadsheet_id)
     worksheets = spreadsheet.worksheets()
 
@@ -90,13 +90,19 @@ def parse_value(value, value_type):
         return value  # enum은 Unity에서 변환
 
     if value_type in ('List<int>', 'int[]'):
-        return [int(v) for v in value.split(',')]
+        if not value:
+            return []
+        return [int(v.strip()) for v in value.split(',') if v.strip()]
 
     if value_type in ('List<float>', 'float[]'):
-        return [float(v) for v in value.split(',')]
+        if not value:
+            return []
+        return [float(v.strip()) for v in value.split(',') if v.strip()]
 
     if value_type in ('List<string>', 'string[]'):
-        return [v for v in value.split(',')]
+        if not value:
+            return []
+        return [v.strip() for v in value.split(',') if v.strip()]
 
     return value
 
