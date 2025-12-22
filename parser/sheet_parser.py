@@ -141,7 +141,10 @@ def generate_csharp_classes(sheet_name, type_row, key_row, type_desc, output_dir
         if not key:
             continue
         value_type = type_row[i] if i < len(type_row) else 'string'
-        cs_type = type_mapping.get(value_type, 'string')
+        cs_type = type_mapping.get(value_type)
+        if cs_type is None:
+            # enum 타입
+            cs_type = value_type
         desc = type_desc[i] if i < len(type_desc) else ""
         fields.append(f'        public {cs_type} {key}; // {desc}')
 
