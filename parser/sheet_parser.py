@@ -34,23 +34,40 @@ def get_all_worksheets(client, spreadsheet_id):
 def parse_sheet(worksheet):
     """시트 데이터를 딕셔너리 리스트로 변환"""
     try:
+        rows = worksheet.get_all_values()
+
+        # 최소 구조 검증
+        if len(rows) < 4:
+            print(f'⚠ Skip {worksheet.title}: not enough rows')
+            return None
+
+        type_row = rows[1]   # int, float, string, ...
+        key_row  = rows[2]   # id, attack, description, ...
+        data_rows = rows[3:]
+
         parsed = []
 
-    for row in data_rows:
-    if not row or row[0].startswith('#'):
-        continue
+        for row in data_rows:
+            if not row:
+                continue
 
-    item = {}
-    for i in range(len(key_row)):
-        key = key_row[i]
-        value_type = type_row[i]
-        value = row[i] if i < len(row) else ''
+            # 첫 컬럼이 주석이면 row 전체 스킵
+            if row[0].startswith('#'):
+                continue
 
-        item[key] = parse_value(value, value_type)
+            item = {}
+            for i in range(len(key_row)):
+                key = key_row[i]
+                value_type = type_row[i]
+                value = row[i] if i < len(row) else ''
 
-        parsed.append(item)
-        
+                item[key] = parse_value(value, value_type)
+
+            parsed.append(item)
+
+        print(f'✓ Parsed: {worksheet.title} ({len(parsed)} rows)')
         return parsed
+
     except Exception as e:
         print(f'✗ Error parsing {worksheet.title}: {e}')
         return None
