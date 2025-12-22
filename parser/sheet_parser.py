@@ -23,13 +23,12 @@ def get_all_worksheets(client, spreadsheet_id):
     # !, @, # 접두사가 붙은 시트 제외
     INVALID_PREFIXES = ('!', '@', '#')
 
+    valid_sheets = [
+        ws for ws in worksheets
+        if not ws.title.startswith(INVALID_PREFIXES)
+    ]
 
-valid_sheets = [
-    ws for ws in worksheets
-    if not ws.title.startswith(INVALID_PREFIXES)
-]
-
-return valid_sheets
+    return valid_sheets
 
 
 def parse_sheet(worksheet):
