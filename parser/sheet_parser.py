@@ -143,44 +143,44 @@ def generate_csharp_classes(sheet_name, type_row, key_row, output_dir):
 
     # 데이터 클래스
     data_class = f'''using System;
-  using System.Collections.Generic;
+using System.Collections.Generic;
 
-  [Serializable]
-  public class {sheet_name}
-  {{
-  {fields_str}
-  }}
+[Serializable]
+public class {sheet_name}
+{{
+    {fields_str}
+}}
   '''
 
     # SO 클래스
     so_class = f'''using System.Collections.Generic;
-  using UnityEngine;
+using UnityEngine;
 
-  [CreateAssetMenu(fileName = "{sheet_name}SO", menuName = "Data/{sheet_name}SO")]
-  public class {sheet_name}SO : ScriptableObject
-  {{
-      public List<{sheet_name}> items = new();
+[CreateAssetMenu(fileName = "{sheet_name}SO", menuName = "Data/{sheet_name}SO")]
+public class {sheet_name}SO : ScriptableObject
+{{
+    public List<{sheet_name}> items = new();
       
-      private Dictionary<int, {sheet_name}> dataDict;
+    private Dictionary<int, {sheet_name}> dataDict;
       
-      public void Initialize()
-      {{
-          dataDict = new Dictionary<int, {sheet_name}>();
-          foreach (var item in items)
-          {{
-              dataDict[item.id] = item;
-          }}
-      }}
+    public void Initialize()
+    {{
+        dataDict = new Dictionary<int, {sheet_name}>();
+        foreach (var item in items)
+        {{
+            dataDict[item.id] = item;
+        }}
+    }}
       
-      public {sheet_name} Get(int id)
-      {{
-          if (dataDict == null || dataDict.Count == 0)
-          {{
-              Initialize();
-          }}
-          return dataDict.GetValueOrDefault(id);
-      }}
-  }}
+    public {sheet_name} Get(int id)
+    {{
+        if (dataDict == null || dataDict.Count == 0)
+        {{
+            Initialize();
+        }}
+        return dataDict.GetValueOrDefault(id);
+    }}
+}}
   '''
 
     # 폴더 생성
