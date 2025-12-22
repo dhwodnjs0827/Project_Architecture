@@ -143,7 +143,7 @@ def generate_csharp_classes(sheet_name, type_row, key_row, type_desc, output_dir
         value_type = type_row[i] if i < len(type_row) else 'string'
         cs_type = type_mapping.get(value_type, 'string')
         desc = type_desc[i] if i < len(type_desc) else ""
-        fields.append(f'    public {cs_type} {key} // {desc};')
+        fields.append(f'    public {cs_type} {key}; // {desc}')
 
     fields_str = '\n'.join(fields)
 
