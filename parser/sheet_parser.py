@@ -39,7 +39,7 @@ def parse_sheet(worksheet):
             return None, None, None, None
 
         # 주석
-        type_desc = row[0]
+        type_desc = rows[0]
         # 타입
         type_row = rows[1]
         # 키 값
