@@ -48,7 +48,9 @@ def parse_sheet(worksheet):
 
         item[key] = parse_value(value, value_type)
 
-    parsed.append(item)
+        parsed.append(item)
+        
+        return parsed
     except Exception as e:
         print(f'✗ Error parsing {worksheet.title}: {e}')
         return None
