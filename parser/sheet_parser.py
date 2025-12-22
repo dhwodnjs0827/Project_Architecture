@@ -230,7 +230,7 @@ def main():
         sheet_name = worksheet.title
         json_path = f'{json_output_dir}/{sheet_name}.json'
 
-        data, type_row, key_row = parse_sheet(worksheet)
+        data, type_row, key_row, type_desc = parse_sheet(worksheet)
 
         if data is not None:
             save_to_json(data, json_path)
