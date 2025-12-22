@@ -3,7 +3,7 @@
     "id": 1,
     "attack": 5.6,
     "description": "테스트 문자열",
-    "eventType": null,
+    "eventType": "None",
     "weapons": [
       1,
       3,
