@@ -20,9 +20,7 @@ def get_all_worksheets(client, spreadsheet_id):
     spreadsheet = client.open_by_key(spreadsheet_id)
     worksheets = spreadsheet.worksheets()
 
-    # !, @, # 접두사가 붙은 시트 제외
     INVALID_PREFIXES = ('!', '@', '#')
-
     valid_sheets = [
         ws for ws in worksheets
         if not ws.title.startswith(INVALID_PREFIXES)
@@ -32,17 +30,16 @@ def get_all_worksheets(client, spreadsheet_id):
 
 
 def parse_sheet(worksheet):
-    """시트 데이터를 딕셔너리 리스트로 변환"""
+    """시트 데이터를 파싱"""
     try:
         rows = worksheet.get_all_values()
 
-        # 최소 구조 검증
         if len(rows) < 4:
             print(f'⚠ Skip {worksheet.title}: not enough rows')
-            return None
+            return None, None, None
 
-        type_row = rows[1]   # int, float, string, ...
-        key_row  = rows[2]   # id, attack, description, ...
+        type_row = rows[1]
+        key_row = rows[2]
         data_rows = rows[3:]
 
         parsed = []
@@ -51,7 +48,6 @@ def parse_sheet(worksheet):
             if not row:
                 continue
 
-            # 첫 컬럼이 주석이면 row 전체 스킵
             if row[0].startswith('#'):
                 continue
 
@@ -66,14 +62,15 @@ def parse_sheet(worksheet):
             parsed.append(item)
 
         print(f'✓ Parsed: {worksheet.title} ({len(parsed)} rows)')
-        return parsed
+        return parsed, type_row, key_row
 
     except Exception as e:
         print(f'✗ Error parsing {worksheet.title}: {e}')
-        return None
+        return None, None, None
 
 
 def parse_value(value, value_type):
+    """값을 타입에 맞게 변환"""
     if value == '' or value == 'None':
         return None
 
@@ -86,8 +83,8 @@ def parse_value(value, value_type):
     if value_type == 'string':
         return value
 
-    if value_type == 'EventType':
-        return value  # enum은 Unity에서 변환
+    if value_type == 'bool':
+        return value.lower() in ('true', '1', 'yes')
 
     if value_type in ('List<int>', 'int[]'):
         if not value:
@@ -115,11 +112,99 @@ def save_to_json(data, output_path):
     print(f'  → Saved: {output_path}')
 
 
+def generate_csharp_classes(sheet_name, type_row, key_row, output_dir):
+    """C# 데이터 클래스 및 SO 클래스 생성"""
+
+    # 타입 매핑
+    type_mapping = {
+        'int': 'int',
+        'float': 'float',
+        'string': 'string',
+        'bool': 'bool',
+        'List<int>': 'List<int>',
+        'List<float>': 'List<float>',
+        'List<string>': 'List<string>',
+        'int[]': 'int[]',
+        'float[]': 'float[]',
+        'string[]': 'string[]',
+    }
+
+    # 필드 생성
+    fields = []
+    for i in range(len(key_row)):
+        key = key_row[i]
+        if not key:
+            continue
+        value_type = type_row[i] if i < len(type_row) else 'string'
+        cs_type = type_mapping.get(value_type, 'string')
+        fields.append(f'    public {cs_type} {key};')
+
+    fields_str = '\n'.join(fields)
+
+    # 데이터 클래스
+    data_class = f'''using System;
+  using System.Collections.Generic;
+
+  [Serializable]
+  public class {sheet_name}
+  {{
+  {fields_str}
+  }}
+  '''
+
+    # SO 클래스
+    so_class = f'''using System.Collections.Generic;
+  using UnityEngine;
+
+  [CreateAssetMenu(fileName = "{sheet_name}SO", menuName = "Data/{sheet_name}SO")]
+  public class {sheet_name}SO : ScriptableObject
+  {{
+      public List<{sheet_name}> items = new();
+      
+      private Dictionary<int, {sheet_name}> dataDict;
+      
+      public void Initialize()
+      {{
+          dataDict = new Dictionary<int, {sheet_name}>();
+          foreach (var item in items)
+          {{
+              dataDict[item.id] = item;
+          }}
+      }}
+      
+      public {sheet_name} Get(int id)
+      {{
+          if (dataDict == null || dataDict.Count == 0)
+          {{
+              Initialize();
+          }}
+          return dataDict.GetValueOrDefault(id);
+      }}
+  }}
+  '''
+
+    # 폴더 생성
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 파일 저장
+    data_path = f'{output_dir}/{sheet_name}.cs'
+    so_path = f'{output_dir}/{sheet_name}SO.cs'
+
+    with open(data_path, 'w', encoding='utf-8') as f:
+        f.write(data_class)
+    print(f'  → Generated: {data_path}')
+
+    with open(so_path, 'w', encoding='utf-8') as f:
+        f.write(so_class)
+    print(f'  → Generated: {so_path}')
+
+
 def main():
     # 환경 변수에서 설정 읽기
     credentials_path = os.environ.get('GOOGLE_CREDENTIALS_PATH', 'credentials.json')
     spreadsheet_id = os.environ.get('SPREADSHEET_ID')
-    output_dir = 'Assets/_Project/Resources/Data/JSON'
+    json_output_dir = 'Assets/_Project/Resources/Data/JSON'
+    cs_output_dir = 'Assets/_Project/1_Scripts/Data/Generated'
 
     if not spreadsheet_id:
         print('Error: SPREADSHEET_ID environment variable is not set')
@@ -127,7 +212,8 @@ def main():
 
     print('=== Google Sheets Parser ===')
     print(f'Spreadsheet ID: {spreadsheet_id[:10]}...')
-    print(f'Output Directory: {output_dir}')
+    print(f'JSON Output: {json_output_dir}')
+    print(f'C# Output: {cs_output_dir}')
     print()
 
     # 클라이언트 생성
@@ -137,7 +223,7 @@ def main():
         print(f'Error: Failed to authenticate: {e}')
         sys.exit(1)
 
-    # 모든 워크시트 가져오기 (! ,@, # 제외)
+    # 모든 워크시트 가져오기
     try:
         worksheets = get_all_worksheets(client, spreadsheet_id)
         print(f'Found {len(worksheets)} sheets to parse')
@@ -150,11 +236,13 @@ def main():
     success_count = 0
     for worksheet in worksheets:
         sheet_name = worksheet.title
-        output_path = f'{output_dir}/{sheet_name}.json'
+        json_path = f'{json_output_dir}/{sheet_name}.json'
 
-        data = parse_sheet(worksheet)
+        data, type_row, key_row = parse_sheet(worksheet)
+
         if data is not None:
-            save_to_json(data, output_path)
+            save_to_json(data, json_path)
+            generate_csharp_classes(sheet_name, type_row, key_row, cs_output_dir)
             success_count += 1
 
     print()
