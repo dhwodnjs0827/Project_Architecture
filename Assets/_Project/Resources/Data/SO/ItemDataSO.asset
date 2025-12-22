@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3357cb4992f1648d188955f34bd1aedb, type: 3}
+  m_Name: ItemDataSO
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDataSO
+  items:
+  - id: 1
+    name: Sword
+    price: 100
+    description: A sharp sword
+  - id: 2
+    name: Shield
+    price: 80
+    description: A sturdy shield
+  - id: 3
+    name: Potion
+    price: 50
+    description: Restores HP
