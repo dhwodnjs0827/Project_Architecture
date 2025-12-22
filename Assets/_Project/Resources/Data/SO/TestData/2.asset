@@ -15,7 +15,7 @@ MonoBehaviour:
   id: 2
   attack: 5.4
   description: test string
-  eventType: 2
+  eventType: 1
   weapons: 010000000200000003000000
   armors: 3800000007000000
   spawnPos:
