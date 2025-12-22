@@ -51,7 +51,7 @@ public static class JsonToSOParser
     private static bool ParseData(string dataName)
     {
         string jsonPath = $"{JSON_PATH}/{dataName}.json";
-        string soPath = $"{SO_PATH}/{dataName}SO.asset";
+        string soRootPath = $"{SO_PATH}/{dataName}";
 
         // 타입 찾기
         Type dataType = FindType(dataName);
@@ -78,10 +78,10 @@ public static class JsonToSOParser
         );
 
         MethodInfo genericMethod = method.MakeGenericMethod(dataType, soType);
-        return (bool)genericMethod.Invoke(null, new object[] { jsonFile.text, soPath, dataName });
+        return (bool)genericMethod.Invoke(null, new object[] { jsonFile.text, soRootPath, dataName });
     }
 
-    private static bool ImportDataGeneric<TData, TSO>(string jsonText, string soPath, string dataName)
+    private static bool ImportDataGeneric<TData, TSO>(string jsonText, string soRootPath, string dataName)
         where TSO : ScriptableObject
     {
         try
@@ -90,53 +90,82 @@ public static class JsonToSOParser
             var wrappedJson = $"{{\"items\":{jsonText}}}";
             var wrapper = JsonUtility.FromJson<ListWrapper<TData>>(wrappedJson);
 
-            if (wrapper?.items == null)
+            if (wrapper?.items == null || wrapper.items.Count == 0)
             {
-                Debug.LogError($"[JsonToSOParser] Failed to parse: {dataName}");
+                Debug.LogError($"[JsonToSOParser] Failed to parse or empty data: {dataName}");
                 return false;
             }
 
-            // SO 폴더 생성
-            string directory = Path.GetDirectoryName(soPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            // SO 폴더 생성 (한 번만)
+            string directoryPath = $"{SO_PATH}/{dataName}";
+            if (!Directory.Exists(directoryPath))
             {
-                Directory.CreateDirectory(directory);
+                Directory.CreateDirectory(directoryPath);
                 AssetDatabase.Refresh();
             }
 
-            // SO 로드 또는 생성
-            var so = AssetDatabase.LoadAssetAtPath<TSO>(soPath);
-            if (so == null)
+            // id 필드 캐싱
+            FieldInfo idField = typeof(TData).GetField("id");
+
+            // TSO 필드 캐싱
+            var soFields = typeof(TSO).GetFields(BindingFlags.Public | BindingFlags.Instance);
+
+            for (int i = 0; i < wrapper.items.Count; i++)
             {
-                so = ScriptableObject.CreateInstance<TSO>();
-                AssetDatabase.CreateAsset(so, soPath);
+                var item = wrapper.items[i];
+
+                // SO 파일명 결정
+                string fileName;
+                if (idField != null)
+                {
+                    var idValue = idField.GetValue(item);
+                    fileName = idValue != null ? idValue.ToString() : i.ToString();
+                }
+                else
+                {
+                    fileName = i.ToString();
+                }
+
+                string itemSOPath = $"{directoryPath}/{fileName}.asset";
+
+                // SO 로드 또는 생성
+                var so = AssetDatabase.LoadAssetAtPath<TSO>(itemSOPath);
+                if (so == null)
+                {
+                    so = ScriptableObject.CreateInstance<TSO>();
+                    AssetDatabase.CreateAsset(so, itemSOPath);
+                }
+
+                // 필드 복사 (이름 기준)
+                foreach (var soField in soFields)
+                {
+                    var dataField = typeof(TData).GetField(soField.Name);
+                    if (dataField == null)
+                        continue;
+
+                    var value = dataField.GetValue(item);
+                    soField.SetValue(so, value);
+                }
+
+                EditorUtility.SetDirty(so);
             }
 
-            // 데이터 설정
-            var itemsField = typeof(TSO).GetField("items");
-            if (itemsField != null)
-            {
-                itemsField.SetValue(so, wrapper.items);
-            }
-
-            EditorUtility.SetDirty(so);
-
-            Debug.Log($"[JsonToSOParser] ✓ Parsed: {dataName} ({wrapper.items.Count} items)");
+            Debug.Log($"[JsonToSOParser] ✓ Parsed {dataName} ({wrapper.items.Count} items)");
             return true;
         }
         catch (Exception e)
         {
-            Debug.LogError($"[JsonToSOParser] Error parsing {dataName}: {e.Message}");
+            Debug.LogError($"[JsonToSOParser] Error parsing {dataName}: {e}");
             return false;
         }
     }
 
     private static Type FindType(string typeName)
     {
-        // 현재 어셈블리에서 타입 찾기
+        // Generated 네임스페이스 안에서만 검색
         return AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(a => a.GetTypes())
-            .FirstOrDefault(t => t.Name == typeName);
+            .FirstOrDefault(t => t.Name == typeName && t.Namespace == "Generated");
     }
 
     [Serializable]
