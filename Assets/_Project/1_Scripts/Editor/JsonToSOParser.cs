@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Unity.Plastic.Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
 
@@ -88,7 +89,7 @@ public static class JsonToSOParser
         {
             // JSON 파싱
             var wrappedJson = $"{{\"items\":{jsonText}}}";
-            var wrapper = JsonUtility.FromJson<ListWrapper<TData>>(wrappedJson);
+            var wrapper = JsonConvert.DeserializeObject<ListWrapper<TData>>(wrappedJson);
 
             if (wrapper?.items == null || wrapper.items.Count == 0)
             {
