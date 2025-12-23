@@ -1,3 +1,4 @@
+#if ADDRESSABLE
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
@@ -34,3 +35,4 @@ public class AddressableHandler : IResourceHandler
         Addressables.Release(obj);
     }
 }
+#endif
