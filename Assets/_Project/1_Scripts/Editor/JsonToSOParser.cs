@@ -12,7 +12,7 @@ public static class JsonToSOParser
     private const string JSON_PATH = "Assets/_Project/Resources/Data/JSON";
     private const string SO_PATH = "Assets/_Project/Resources/Data/SO";
 
-    [MenuItem("Tools/Data/Parse All")]
+    [MenuItem("Tools/Data/Parse JSON To SO All")]
     public static void ParseAll()
     {
         // JSON 폴더의 모든 .json 파일 가져오기
@@ -105,8 +105,9 @@ public static class JsonToSOParser
                 AssetDatabase.Refresh();
             }
 
-            // id 필드 캐싱
-            FieldInfo idField = typeof(TData).GetField("id");
+            // 첫 번째 필드 캐싱 (파일명으로 사용)
+            var dataFields = typeof(TData).GetFields();
+            FieldInfo firstField = dataFields.Length > 0 ? dataFields[0] : null;
 
             // TSO 필드 캐싱
             var soFields = typeof(TSO).GetFields(BindingFlags.Public | BindingFlags.Instance);
@@ -115,12 +116,12 @@ public static class JsonToSOParser
             {
                 var item = wrapper.items[i];
 
-                // SO 파일명 결정
+                // SO 파일명 결정 (첫 번째 필드 값 사용)
                 string fileName;
-                if (idField != null)
+                if (firstField != null)
                 {
-                    var idValue = idField.GetValue(item);
-                    fileName = idValue != null ? idValue.ToString() : i.ToString();
+                    var firstValue = firstField.GetValue(item);
+                    fileName = firstValue != null ? firstValue.ToString() : i.ToString();
                 }
                 else
                 {
