@@ -15,6 +15,18 @@ pipeline {
                   git branch: '', // 체크아웃할 브랜치 이름 (ex: data-sync)
                       url: '', // Git URL (ex: https://github.com/깃 허브 아이디/리포지토리 이름.git)
                       credentialsId: '' // Jenkins GitHub Token ID (ex: github-credentials)
+                      
+                      // dev 브랜치 merge로 최신화 (충돌 시, 파이프라인 실패 및 중단)
+                      withCredentials([usernamePassword(
+                                   credentialsId: 'github-credentials',
+                                   usernameVariable: 'GIT_USERNAME',
+                                   passwordVariable: 'GIT_PASSWORD'
+                               )]) {
+                                   sh '''
+                                       git fetch origin dev
+                                       git merge origin/dev --no-edit
+                                   '''
+                               }
               }
           }
 
